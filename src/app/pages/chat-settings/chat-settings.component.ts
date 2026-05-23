@@ -7,7 +7,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ConfigService } from '../../shared/services/config.service';
 import { ToggleComponent } from '../../shared/components/toggle/toggle.component';
 import { LabelBlockComponent } from '../../shared/components/input-block/label-block.component';
-import { OpenAIService } from '../../shared/services/openai.service';
+import { OllamaService } from '../../shared/services/ollama.service';
 
 export interface ChatPermissionsFormGroup {
   allUsers: FormControl<boolean>;
@@ -30,7 +30,7 @@ export interface ChatSettingsFormGroup {
 })
 export class ChatSettingsComponent {
   private readonly configService = inject(ConfigService);
-  private readonly openAIService = inject(OpenAIService);
+  private readonly ollamaService = inject(OllamaService);
 
   readonly generalChat = new FormGroup<ChatSettingsFormGroup>({
     command: new FormControl('', { nonNullable: true }),
@@ -59,7 +59,7 @@ export class ChatSettingsComponent {
   });
 
   constructor() {
-    this.openAIService.chatSettings$
+    this.ollamaService.chatSettings$
       .pipe(takeUntilDestroyed())
       .subscribe(chatSettings => {
         const { permissions, ...settings } = chatSettings;
@@ -78,7 +78,7 @@ export class ChatSettingsComponent {
     this.gptChat.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe(gptChat => {
-        this.openAIService.updateChatSettings(gptChat);
+        this.ollamaService.updateChatSettings(gptChat);
       });
 
     this.generalChat.valueChanges
@@ -90,7 +90,7 @@ export class ChatSettingsComponent {
     this.gptPermissions.valueChanges
       .pipe(takeUntilDestroyed())
       .subscribe(perms => {
-        this.openAIService.updateChatPermissions(perms);
+        this.ollamaService.updateChatPermissions(perms);
       });
 
     this.generalPermissions.valueChanges

@@ -21,9 +21,6 @@ import { ElevenLabsState } from './shared/state/eleven-labs/eleven-labs.feature'
 import { ElevenLabsActions } from './shared/state/eleven-labs/eleven-labs.actions';
 import { VTubeStudioState } from './shared/state/vtubestudio/vtubestudio.feature.';
 import { VTubeStudioActions } from './shared/state/vtubestudio/vtubestudio.actions';
-import { OpenAIService } from './shared/services/openai.service';
-import { OpenAIState } from './shared/state/openai/openai.feature';
-import { OpenAIActions } from './shared/state/openai/openai.actions';
 import { OllamaService } from './shared/services/ollama.service';
 import { OllamaState } from './shared/state/ollama/ollama.feature';
 import { OllamaActions } from './shared/state/ollama/ollama.actions';
@@ -75,7 +72,6 @@ export class AppComponent {
   private readonly elevenLabsService = inject(ElevenLabsService);
   private readonly chatService = inject(ChatService);
   private readonly configService = inject(ConfigService);
-  private readonly openAIService = inject(OpenAIService);
   private readonly ollamaService = inject(OllamaService);
   private readonly obsSocketService = inject(ObsWebSocketService);
   private readonly streamDeckSocketService = inject(StreamDeckWebSocketService);
@@ -100,7 +96,6 @@ export class AppComponent {
   constructor() {
     combineLatest({
       config: from(getFromStore<ConfigState>(this.settingsLocation, 'config')),
-      openai: from(getFromStore<OpenAIState>(this.settingsLocation, 'openai')),
       ollama: from(getFromStore<OllamaState>(this.settingsLocation, 'ollama')),
       twitch: from(getFromStore<TwitchState>(this.settingsLocation, 'twitch')),
       azure: from(getFromStore<AzureState>(this.settingsLocation, 'azure')),
@@ -117,7 +112,6 @@ export class AppComponent {
       .subscribe((
         {
           config,
-          openai,
           ollama,
           twitch,
           azure,
@@ -132,7 +126,6 @@ export class AppComponent {
         },
       ) => {
         this.handleGlobalData(config);
-        this.handleOpenAIData(openai);
         this.handleOllamaData(ollama);
         this.handleTwitchData(twitch);
         this.handleAzureData(azure);
@@ -170,10 +163,6 @@ export class AppComponent {
     this.vtubeStudioService.state$
       .pipe(debounceTime(500), takeUntilDestroyed())
       .subscribe(state => saveToStore(this.settingsLocation, 'vtube-studio', state));
-
-    this.openAIService.state$
-      .pipe(debounceTime(500), takeUntilDestroyed())
-      .subscribe(state => saveToStore(this.settingsLocation, 'openai', state));
 
     this.ollamaService.state$
       .pipe(debounceTime(500), takeUntilDestroyed())
@@ -237,16 +226,6 @@ export class AppComponent {
 
     this.store.dispatch(
       GlobalConfigActions.updateState({ configState: data.value }),
-    );
-  }
-
-  handleOpenAIData(data: { value: OpenAIState } | undefined) {
-    if (!data || !data.value) {
-      return;
-    }
-
-    this.store.dispatch(
-      OpenAIActions.updateState({ openAIState: data.value }),
     );
   }
 

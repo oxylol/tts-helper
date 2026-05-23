@@ -41,19 +41,19 @@
   <hr>
 
   <div class="header">
-    <span>ChatGPT Chat Settings</span>
+    <span>Local AI Chat Settings</span>
   </div>
-  
+
   <app-label-block>
     <div header>Enabled</div>
-    <div sub-text>If enabled, users can use this command to generate ChatGPT TTS.</div>
+    <div sub-text>If enabled, users can use this command to generate Local AI (Ollama) TTS.</div>
     <app-toggle class="right" [control]="gptChat.controls.enabled"/>
   </app-label-block>
 
   <app-label-block>
     <div header>Command</div>
-    <div sub-text>Will prompt GPT to generate a response.</div>
-    <app-input [control]="gptChat.controls.command" type="text" placeholder="!ask"/>
+    <div sub-text>Will prompt Local AI to generate a response.</div>
+    <app-input [control]="gptChat.controls.command" type="text" placeholder="!local"/>
   </app-label-block>
 
   <app-label-block>

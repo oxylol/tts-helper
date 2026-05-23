@@ -38,10 +38,6 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/settings/settings.component'),
   },
   {
-    path: 'chat-gpt',
-    loadComponent: () => import('./pages/chat-gpt/chat-gpt.component'),
-  },
-  {
     path: 'ollama',
     loadComponent: () => import('./pages/ollama/ollama.component'),
   },

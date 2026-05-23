@@ -16,13 +16,13 @@ import { AzureActions } from '../state/azure/azure.actions';
 import { combineLatest, filter, skip } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { OpenAIService } from './openai.service';
+import { OllamaService } from './ollama.service';
 import { TwitchService } from './twitch.service';
 
 @Injectable()
 export class AzureSttService {
   private readonly store = inject(Store);
-  private readonly openaiService = inject(OpenAIService);
+  private readonly ollamaService = inject(OllamaService);
   private readonly logService = inject(LogService);
   private readonly twitchService = inject(TwitchService);
   private readonly snackbar = inject(MatSnackBar);
@@ -236,6 +236,6 @@ export class AzureSttService {
    * @private
    */
   private sendRecognizedText(text: string) {
-    this.openaiService.playOpenAIResponse(this.twitchUsername, text);
+    this.ollamaService.playOllamaResponse(this.twitchUsername, text);
   }
 }

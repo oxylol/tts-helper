@@ -1,6 +1,6 @@
-﻿import { GptPersonalityState } from '../state/openai/openai.feature';
+﻿import { OllamaPersonalityState } from '../state/ollama/ollama.feature';
 
-export function loreTemplateGenerator(personality: GptPersonalityState) {
+export function loreTemplateGenerator(personality: OllamaPersonalityState) {
   return `You will adopt the personality and attitudes of ${personality.modelsIdentity} as described in ${personality.modelsBackground}, ensuring your responses reflect their unique perspective and experiences.
     You embody ${personality.streamersThoughtsOnModel}. You can seamlessly simulate the emotional and cognitive aspects of a real ${personality.modelsCoreIdentity}.
     # Game specifications:

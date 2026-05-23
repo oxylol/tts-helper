@@ -6,7 +6,7 @@ import { MatSnackBar } from "@angular/material/snack-bar";
 import { AudioService } from "./audio.service";
 import { listen } from "@tauri-apps/api/event";
 import { AudioSource } from "../state/audio/audio.feature";
-import { OpenAIService } from "./openai.service";
+import { OllamaService } from "./ollama.service";
 import { PlaybackService } from "./playback.service";
 
 @Injectable()
@@ -14,7 +14,7 @@ export class TtsHelperApiService {
   readonly store = inject(TtsHelperApiFeature);
   readonly #audioService = inject(AudioService);
   readonly #playbackService = inject(PlaybackService);
-  readonly #openAIService = inject(OpenAIService);
+  readonly #ollamaService = inject(OllamaService);
   readonly #logService = inject(LogService);
   readonly #snackbar = inject(MatSnackBar);
 
@@ -65,7 +65,7 @@ export class TtsHelperApiService {
       const data = event.payload as { username: string, platform: AudioSource, text: string, charLimit: number };
       this.#logService.add(`Creating AI TTS response + audio for request: ${JSON.stringify(data, null, 2)}`, 'info', 'TtsHelperApiService.listen(api:create_ai_tts_audio)');
 
-      this.#openAIService.playOpenAIResponse(data.username, data.text);
+      this.#ollamaService.playOllamaResponse(data.username, data.text);
     }).catch(error => {
       this.#logService.add(`Failed to listen for api:create_ai_tts_audio. ${JSON.stringify(error, null, 2)}`, 'error', 'TtsHelperApiService.listen(api:create_ai_tts_audio)');
     });
@@ -79,7 +79,7 @@ export class TtsHelperApiService {
 
       this.#logService.add(`Creating AI TTS response for request: ${JSON.stringify(data, null, 2)}`, 'info', 'TtsHelperApiService.listen(api:get_ai_response)');
 
-      const response = await this.#openAIService.generateOpenAIResponse(data.username, data.text);
+      const response = await this.#ollamaService.generateOllamaResponse(data.username, data.text);
 
       this.sendToOutboundSources(response ?? 'My brain is all fuzzy ...');
 
@@ -88,38 +88,6 @@ export class TtsHelperApiService {
       this.#logService.add(`Failed to listen for api:get_ai_response. ${JSON.stringify(error, null, 2)}`, 'error', 'TtsHelperApiService.listen(api:get_ai_response)');
     });
 
-    /**
-     * From the TTS Helper API
-     * Users can trigger the vision feature and have AI respond to the provided prompt, if there is one.
-     */
-    listen('api:trigger_ai_vision', async event => {
-      const data = event.payload as { username: string, platform: AudioSource, text: string, charLimit: number };
-
-      this.#logService.add(`Creating AI image TTS response for request: ${JSON.stringify(data, null, 2)}`, 'info', 'TtsHelperApiService.listen(api:trigger_ai_vision)');
-
-      this.#openAIService.captureScreen(data.text);
-    }).catch(error => {
-      this.#logService.add(`Failed to listen for api:trigger_ai_vision. ${JSON.stringify(error, null, 2)}`, 'error', 'TtsHelperApiService.listen(api:trigger_ai_vision)');
-    });
-
-    /**
-     * From the TTS Helper API
-     * Users can pass an image for the vision feature and have AI respond to the provided prompt, if there is one.
-     */
-    listen('api:react_ai_image', async event => {
-      // The image is represented as a b64 string
-      const data = event.payload as { text: string, image: string };
-
-      if (!data.image) {
-        return this.#logService.add(`There was an attempt to create a response to no image.`, 'info', 'TtsHelperApiService.listen(api:react_ai_image)');
-      }
-
-      this.#logService.add(`Creating AI image TTS response for prompt: ${data.text}`, 'info', 'TtsHelperApiService.listen(api:react_ai_image)');
-
-      this.#openAIService.generateResponseToImage(data.image, data.text);
-    }).catch(error => {
-      this.#logService.add(`Failed to listen for api:react_ai_image. ${JSON.stringify(error, null, 2)}`, 'error', 'TtsHelperApiService.listen(api:react_ai_image)');
-    });
   }
 
   updateState(state: Partial<TtsHelperApiFeatureState>) {
