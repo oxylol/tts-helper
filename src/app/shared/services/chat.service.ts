@@ -1,8 +1,10 @@
 ﻿import { inject, Injectable } from '@angular/core';
 import { ConfigService } from './config.service';
 import { OpenAIService } from './openai.service';
+import { OllamaService } from './ollama.service';
 import { GeneralChatState } from '../state/config/config.feature';
 import { GptChatState } from '../state/openai/openai.feature';
+import { OllamaChatState } from '../state/ollama/ollama.feature';
 import { ChatPermissions, ChatUserMessage, WatchStreakUser } from './chat.interface';
 import { AudioService } from './audio.service';
 import { AudioSource } from '../state/audio/audio.feature';
@@ -17,6 +19,7 @@ export class ChatService {
   private readonly store = inject(Store);
   private readonly configService = inject(ConfigService);
   private readonly openaiService = inject(OpenAIService);
+  private readonly ollamaService = inject(OllamaService);
   private readonly audioService = inject(AudioService);
   private readonly twitchService = inject(TwitchService);
 
@@ -24,6 +27,7 @@ export class ChatService {
 
   generalChat!: GeneralChatState;
   openAIChat!: GptChatState;
+  ollamaChat!: OllamaChatState;
   twitchRandomCharacterLimit: number = 0;
 
   cooldowns = new Map<string, boolean>();
@@ -36,6 +40,10 @@ export class ChatService {
     this.openaiService.chatSettings$
       .pipe(takeUntilDestroyed())
       .subscribe(chatSettings => this.openAIChat = chatSettings);
+
+    this.ollamaService.chatSettings$
+      .pipe(takeUntilDestroyed())
+      .subscribe(chatSettings => this.ollamaChat = chatSettings);
 
     this.twitchService.settings$
       .pipe(takeUntilDestroyed())
@@ -51,12 +59,13 @@ export class ChatService {
   async onMessage(user: ChatUserMessage, source: AudioSource) {
     const canProceed = await this.audioService.canProcessMessage(user.text, user.displayName);
 
-    if (!canProceed || !this.generalChat.enabled && !this.openAIChat.enabled) {
+    if (!canProceed || !this.generalChat.enabled && !this.openAIChat.enabled && !this.ollamaChat.enabled) {
       return false;
     }
 
     const generalCooldownID = `${source}-general`;
     const gptCooldownID = `${source}-gpt`;
+    const ollamaCooldownID = `${source}-ollama`;
     const { text } = user;
 
     /**
@@ -92,6 +101,24 @@ export class ChatService {
       // Handle cooldown if there is any.
       this.cooldowns.set(gptCooldownID, true);
       setTimeout(() => this.cooldowns.set(gptCooldownID, false), duration);
+
+      return true;
+    }
+
+    /**
+     * Handle Ollama (local AI) related chat commands and their cooldowns
+     */
+    if (this.ollamaChat.enabled &&
+      text.startsWith(this.ollamaChat.command) &&
+      this.hasChatCommandPermissions(user, this.ollamaChat.permissions) &&
+      !this.cooldowns.get(ollamaCooldownID)
+    ) {
+      this.ollamaService.playOllamaResponse(user.displayName, text, true);
+      const duration = this.ollamaChat.cooldown * 1000;
+
+      // Handle cooldown if there is any.
+      this.cooldowns.set(ollamaCooldownID, true);
+      setTimeout(() => this.cooldowns.set(ollamaCooldownID, false), duration);
 
       return true;
     }
