@@ -60,10 +60,35 @@ jobs:
       - name: install frontend dependencies
         run: yarn install
 
+      - name: Prepare signing key
+        run: |
+          node -e "
+          const key = process.env.RAW_KEY || '';
+          const fs = require('fs');
+          const os = require('os');
+          const path = require('path');
+          const comment = 'untrusted comment: minisign secret key D883434EB0DEE408';
+          let content = key.trim();
+          try {
+            const decoded = Buffer.from(content, 'base64').toString('utf8');
+            if (decoded.startsWith('untrusted comment:') || decoded.includes('\n')) {
+              content = decoded.trim();
+            }
+          } catch(e) {}
+          if (!content.startsWith('untrusted comment:')) {
+            content = comment + '\n' + content;
+          }
+          const keyPath = path.join(os.tmpdir(), 'tauri_signing_key.txt');
+          fs.writeFileSync(keyPath, content + '\n');
+          fs.appendFileSync(process.env.GITHUB_ENV, 'TAURI_KEY_PATH=' + keyPath + '\n');
+          "
+        env:
+          RAW_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+
       - uses: tauri-apps/tauri-action@dev
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ env.TAURI_KEY_PATH }}
         with:
           tagName: tts-helper-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version
           releaseName: 'TTS Helper v__VERSION__'
