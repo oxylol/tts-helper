@@ -42,6 +42,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/chat-gpt/chat-gpt.component'),
   },
   {
+    path: 'ollama',
+    loadComponent: () => import('./pages/ollama/ollama.component'),
+  },
+  {
     path: 'chat-settings',
     loadComponent: () => import('./pages/chat-settings/chat-settings.component'),
   },

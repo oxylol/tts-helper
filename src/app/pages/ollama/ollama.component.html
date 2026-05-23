@@ -1,0 +1,111 @@
+<div class="header">
+  <span>Local AI Settings (Ollama)</span>
+</div>
+
+<div class="section">
+  <div class="warning">
+    <span>Local AI uses <strong>Ollama</strong> running on your machine. Make sure Ollama is installed and running before enabling.</span>
+    <span>Ollama's API is OpenAI-compatible, so any model you have pulled (e.g. <code>qwen2.5:7b</code>) can be used here.</span>
+    <span>Install Ollama and pull a model: <code>ollama pull qwen2.5:7b</code></span>
+  </div>
+
+  <hr />
+
+  <mat-tab-group animationDuration="0ms">
+    <mat-tab label="General">
+      <div class="header">
+        <span>General Settings</span>
+      </div>
+
+      <app-label-block>
+        <div header>Enable Local AI</div>
+        <div sub-text>If enabled, users can use chat commands to trigger the local AI.</div>
+        <app-toggle class="right" [control]="settings.controls.enabled" />
+      </app-label-block>
+
+      <app-label-block>
+        <div header>Ollama Host</div>
+        <div sub-text>URL where Ollama is running. Default is http://localhost:11434</div>
+        <app-input [control]="settings.controls.host" placeholder="http://localhost:11434" type="text" />
+      </app-label-block>
+
+      <app-label-block>
+        <div header>Model</div>
+        <div sub-text>The Ollama model to use for generation (e.g. qwen2.5:7b, llama3.2, mistral).</div>
+        <app-input [control]="settings.controls.model" placeholder="qwen2.5:7b" type="text" />
+      </app-label-block>
+
+      <app-label-block>
+        <div header>Chat Command</div>
+        <div sub-text>The command viewers type to trigger the local AI (e.g. !local, !ai).</div>
+        <app-input [control]="command" placeholder="!local" type="text" />
+      </app-label-block>
+
+      <app-label-block>
+        <div header>Character Limit</div>
+        <div sub-text>The max amount of characters that will be converted into audio.</div>
+        <app-input [control]="charLimit" placeholder="Enter character limit." type="number" />
+      </app-label-block>
+
+      <app-label-block>
+        <div header>Message History</div>
+        <div sub-text>How many previous messages to send with each request for context.</div>
+        <app-input
+          [control]="settings.controls.historyLimit"
+          type="number"
+          [hasError]="settings.controls.historyLimit.errors !== null"
+        />
+        @if (settings.controls.historyLimit.hasError('min')) {
+          <mat-error>Cannot have a negative history count.</mat-error>
+        } @else if (settings.controls.historyLimit.hasError('max')) {
+          <mat-error>Currently we recommend 20 messages in history at max.</mat-error>
+        }
+      </app-label-block>
+    </mat-tab>
+
+    <mat-tab label="Personality">
+      <div class="header">
+        <span>Personality</span>
+      </div>
+      <div class="sub-header">
+        <span>Give your local AI a character. Leave blank for no personality.</span>
+      </div>
+
+      <app-label-block>
+        <div header>Streamer's Identity</div>
+        <div sub-text>Who is the streamer? (e.g. "Alex, a horror game streamer")</div>
+        <app-input [control]="personality.controls.streamersIdentity" placeholder="e.g. Alex" type="text" />
+      </app-label-block>
+
+      <app-label-block>
+        <div header>AI's Identity</div>
+        <div sub-text>What is the AI's name/character? (e.g. "Shade, a sarcastic ghost")</div>
+        <app-input [control]="personality.controls.modelsIdentity" placeholder="e.g. Shade" type="text" />
+      </app-label-block>
+
+      <app-label-block>
+        <div header>AI's Core Identity</div>
+        <div sub-text>What type of being is it? (e.g. "ghost", "robot", "wizard")</div>
+        <app-input [control]="personality.controls.modelsCoreIdentity" placeholder="e.g. ghost" type="text" />
+      </app-label-block>
+
+      <app-label-block>
+        <div header>AI's Background</div>
+        <div sub-text>Describe the AI's backstory and personality traits.</div>
+        <app-input [control]="personality.controls.modelsBackground" placeholder="e.g. a mischievous ghost who haunts streamers" type="text" />
+      </app-label-block>
+
+      <app-label-block>
+        <div header>Streamer-AI Relationship</div>
+        <div sub-text>How does the AI relate to the streamer? (e.g. "reluctant companion")</div>
+        <app-input [control]="personality.controls.streamerModelRelation" placeholder="e.g. companion" type="text" />
+      </app-label-block>
+
+      <app-label-block>
+        <div header>Streamer's Thoughts on AI</div>
+        <div sub-text>How does the streamer perceive the AI? (e.g. "an annoying but helpful ghost")</div>
+        <app-input [control]="personality.controls.streamersThoughtsOnModel" placeholder="e.g. an annoying ghost" type="text" />
+      </app-label-block>
+    </mat-tab>
+  </mat-tab-group>
+</div>
