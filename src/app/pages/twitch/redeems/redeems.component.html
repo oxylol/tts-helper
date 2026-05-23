@@ -26,8 +26,8 @@
 </app-label-block>
 
 <app-label-block>
-  <div header>ChatGPT Redeem</div>
-  <div sub-text>This redeem will trigger a ChatGPT response.</div>
+  <div header>Local AI Redeem</div>
+  <div sub-text>This redeem will trigger a Local AI (Ollama) response.</div>
   <app-selector
     placeholder="Select a redeem option" [control]="settings.controls.gptRedeem"
     [options]="(redeemOptions$ | async) ?? []"

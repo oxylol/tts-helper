@@ -14,7 +14,6 @@ import { routes } from './app/app.routes';
 import { AzureFeature } from './app/shared/state/azure/azure.feature';
 import { ElevenLabsFeature } from './app/shared/state/eleven-labs/eleven-labs.feature';
 import { VTubeStudioFeature } from './app/shared/state/vtubestudio/vtubestudio.feature.';
-import { OpenAIFeature } from './app/shared/state/openai/openai.feature';
 import { OllamaFeature } from './app/shared/state/ollama/ollama.feature';
 import { VStreamFeature } from './app/shared/state/vstream/vstream.feature';
 import { AzureSttService } from './app/shared/services/azure-stt.service';
@@ -24,7 +23,6 @@ import { CommandService } from './app/shared/services/command.service';
 import { ElevenLabsService } from './app/shared/services/eleven-labs.service';
 import { ConfigService } from './app/shared/services/config.service';
 import { LogService } from './app/shared/services/logs.service';
-import { OpenAIService } from './app/shared/services/openai.service';
 import { OllamaService } from './app/shared/services/ollama.service';
 import { ObsWebSocketService } from './app/shared/services/obs-websocket.service';
 import { StreamDeckWebSocketService } from './app/shared/services/streamdeck-websocket.service';
@@ -50,7 +48,6 @@ bootstrapApplication(AppComponent, {
       StoreModule.forFeature(AzureFeature),
       StoreModule.forFeature(ConfigFeature),
       StoreModule.forFeature(ElevenLabsFeature),
-      StoreModule.forFeature(OpenAIFeature),
       StoreModule.forFeature(OllamaFeature),
       StoreModule.forFeature(TwitchFeature),
       StoreModule.forFeature(VTubeStudioFeature),
@@ -75,7 +72,6 @@ bootstrapApplication(AppComponent, {
     ElevenLabsService,
     ConfigService,
     LogService,
-    OpenAIService,
     OllamaService,
     ObsWebSocketService,
     StreamDeckWebSocketService,

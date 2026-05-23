@@ -1,7 +1,7 @@
 ﻿import { StaticAuthProvider } from '@twurple/auth';
 import { DestroyRef, inject, Injectable } from '@angular/core';
 import { TwitchService } from './twitch.service';
-import { combineLatest, filter, first, map, tap } from 'rxjs';
+import { combineLatest, filter, first, map } from 'rxjs';
 import { ApiClient } from '@twurple/api';
 import { EventSubWsListener } from '@twurple/eventsub-ws';
 import { ChatClient, ChatUser } from '@twurple/chat';
@@ -9,7 +9,7 @@ import { AudioService } from './audio.service';
 import { TwitchCheer, TwitchGiftSub, TwitchRedeem, TwitchSub, TwitchSubMessage } from './twitch-pubsub.interface';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LogService } from './logs.service';
-import { OpenAIService } from './openai.service';
+import { OllamaService } from './ollama.service';
 import { ChatService } from './chat.service';
 import { ConfigService } from './config.service';
 import { TtsType } from '../state/config/config.feature';
@@ -21,7 +21,7 @@ export class TwitchPubSub {
   private readonly twitchService = inject(TwitchService);
   private readonly audioService = inject(AudioService);
   private readonly logService = inject(LogService);
-  private readonly openaiService = inject(OpenAIService);
+  private readonly ollamaService = inject(OllamaService);
   private readonly chatService = inject(ChatService);
   private readonly configService = inject(ConfigService);
 
@@ -45,7 +45,7 @@ export class TwitchPubSub {
   private readonly follower$ = this.twitchService.follower$;
 
   private readonly twitchSettings$ = this.twitchService.settings$;
-  private readonly gptSettings$ = this.openaiService.settings$;
+  private readonly ollamaSettings$ = this.ollamaService.settings$;
 
   constructor() {
     combineLatest({
@@ -159,9 +159,9 @@ export class TwitchPubSub {
       return;
     }
 
-    combineLatest([this.twitchSettings$, this.gptSettings$])
+    combineLatest([this.twitchSettings$, this.ollamaSettings$])
       .pipe(first(), takeUntilDestroyed(this.destroyRef))
-      .subscribe(([twitch, gpt]) => {
+      .subscribe(([twitch, ollama]) => {
         const { randomChance } = twitch;
 
         this.chatService.randomChance(
@@ -170,7 +170,7 @@ export class TwitchPubSub {
             displayName: user.displayName,
           },
           randomChance,
-          gpt.enabled,
+          ollama.enabled,
           'twitch',
         );
       });
@@ -274,29 +274,6 @@ export class TwitchPubSub {
   handleRedeem(redeem: TwitchRedeem) {
     this.handleCustomUserVoiceRedeem(redeem);
     this.handleRedeemTts(redeem);
-    this.handleRedeemVision(redeem);
-  }
-
-  private handleRedeemVision(redeem: TwitchRedeem) {
-    const { rewardId, userDisplayName: username } = redeem;
-
-    this.openaiService.vision$
-      .pipe(
-        first(),
-        takeUntilDestroyed(this.destroyRef),
-        tap(vision => {
-          const { twitchRedeemId } = vision;
-
-          if (rewardId !== twitchRedeemId) {
-            return;
-          }
-
-          this.logService.add(`User [${username}] redeemed vision.`, 'info', 'TwitchPubSub.handleRedeemVision');
-
-          this.openaiService.captureScreen();
-        }),
-      )
-      .subscribe();
   }
 
   /**
@@ -425,9 +402,9 @@ export class TwitchPubSub {
   private handleRedeemTts(redeem: TwitchRedeem) {
     const { rewardId, userDisplayName, input } = redeem;
 
-    combineLatest([this.redeemsSettings$, this.gptSettings$])
-      .pipe(first(), filter(([redeems, gpt]) => redeems.enabled || gpt.enabled))
-      .subscribe(([redeems, gpt]) => {
+    combineLatest([this.redeemsSettings$, this.ollamaSettings$])
+      .pipe(first(), filter(([redeems, ollama]) => redeems.enabled || ollama.enabled))
+      .subscribe(([redeems, ollama]) => {
         // Normal TTS.
         if (redeems.enabled && rewardId === redeems.redeem) {
           this.audioService.playTts(
@@ -438,9 +415,9 @@ export class TwitchPubSub {
           );
         }
 
-        // If the streamer has GPT enabled, forward all TTS to ChatGPT.
-        if (gpt.enabled && redeems.gptRedeem === rewardId) {
-          this.openaiService.playOpenAIResponse(userDisplayName, input);
+        // If the streamer has Ollama enabled, forward all TTS to Local AI.
+        if (ollama.enabled && redeems.gptRedeem === rewardId) {
+          this.ollamaService.playOllamaResponse(userDisplayName, input);
         }
       });
   }

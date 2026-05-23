@@ -19,9 +19,9 @@ import {
   VStreamSettingsState,
   VStreamSubscriptionSettingsState,
 } from '../state/vstream/vstream.feature';
-import { OpenAIService } from './openai.service';
+import { OllamaService } from './ollama.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { GptSettingsState } from '../state/openai/openai.feature';
+import { OllamaSettingsState } from '../state/ollama/ollama.feature';
 import { LogService } from './logs.service';
 import { AudioService } from './audio.service';
 import { CommandService } from './command.service';
@@ -32,7 +32,7 @@ import { HttpClient } from '@angular/common/http';
 export class VStreamPubSubService {
   private readonly vstreamService = inject(VStreamService);
   private readonly commandService = inject(CommandService);
-  private readonly openaiService = inject(OpenAIService);
+  private readonly ollamaService = inject(OllamaService);
   private readonly chatService = inject(ChatService);
   private readonly audioService = inject(AudioService);
   private readonly logService = inject(LogService);
@@ -54,8 +54,7 @@ export class VStreamPubSubService {
   meteorShowerSettings!: VStreamCustomMessageState;
   followerSettings!: VStreamCustomMessageState;
 
-  // ChatGPT Settings
-  gptSettings!: GptSettingsState;
+  ollamaSettings!: OllamaSettingsState;
 
   constructor() {
     combineLatest([
@@ -78,9 +77,9 @@ export class VStreamPubSubService {
           this.followerSettings = follower;
         });
 
-    this.openaiService.settings$
+    this.ollamaService.settings$
       .pipe(takeUntilDestroyed())
-      .subscribe(settings => this.gptSettings = settings);
+      .subscribe(settings => this.ollamaSettings = settings);
 
     this.vstreamService.settings$
       .pipe(takeUntilDestroyed())
@@ -169,7 +168,7 @@ export class VStreamPubSubService {
     }
 
     if (enabledGpt) {
-      this.openaiService.playOpenAIResponse(username, text);
+      this.ollamaService.playOllamaResponse(username, text);
     } else if (enabled) {
       this.audioService.playTts(
         text,
@@ -349,7 +348,7 @@ export class VStreamPubSubService {
           displayName: chatter.displayName,
         },
         randomChance,
-        this.gptSettings.enabled,
+        this.ollamaSettings.enabled,
         'vstream',
       );
     }

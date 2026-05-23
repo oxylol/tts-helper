@@ -10,7 +10,7 @@ import { SelectorComponent } from '../../../shared/components/selector/selector.
 import { TTSOption } from '../../../shared/components/tts-selector/tts-selector.component';
 import { AsyncPipe } from '@angular/common';
 import { MatInputModule } from '@angular/material/input';
-import { OpenAIService } from '../../../shared/services/openai.service';
+import { OllamaService } from '../../../shared/services/ollama.service';
 
 @Component({
     selector: 'app-redeems',
@@ -27,7 +27,7 @@ import { OpenAIService } from '../../../shared/services/openai.service';
 })
 export class RedeemsComponent {
   private readonly twitchService = inject(TwitchService);
-  private readonly openAIService = inject(OpenAIService);
+  private readonly ollamaService = inject(OllamaService);
 
   readonly settings = new FormGroup({
     enabled: new FormControl(true, { nonNullable: true }),
@@ -39,7 +39,7 @@ export class RedeemsComponent {
     }),
   });
 
-  readonly gptEnabled$ = this.openAIService.enabled$;
+  readonly gptEnabled$ = this.ollamaService.enabled$;
   readonly redeems$ = this.twitchService.redeems$;
   readonly redeemOptions$ = this.redeems$
     .pipe(

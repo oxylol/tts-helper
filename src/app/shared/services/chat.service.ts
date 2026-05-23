@@ -1,9 +1,7 @@
-﻿import { inject, Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { ConfigService } from './config.service';
-import { OpenAIService } from './openai.service';
 import { OllamaService } from './ollama.service';
 import { GeneralChatState } from '../state/config/config.feature';
-import { GptChatState } from '../state/openai/openai.feature';
 import { OllamaChatState } from '../state/ollama/ollama.feature';
 import { ChatPermissions, ChatUserMessage, WatchStreakUser } from './chat.interface';
 import { AudioService } from './audio.service';
@@ -18,7 +16,6 @@ import { TwitchService } from './twitch.service';
 export class ChatService {
   private readonly store = inject(Store);
   private readonly configService = inject(ConfigService);
-  private readonly openaiService = inject(OpenAIService);
   private readonly ollamaService = inject(OllamaService);
   private readonly audioService = inject(AudioService);
   private readonly twitchService = inject(TwitchService);
@@ -26,7 +23,6 @@ export class ChatService {
   public readonly watchStreakState$ = this.store.select(WatchStreakFeature.selectWatchStreakFeatureState);
 
   generalChat!: GeneralChatState;
-  openAIChat!: GptChatState;
   ollamaChat!: OllamaChatState;
   twitchRandomCharacterLimit: number = 0;
 
@@ -36,10 +32,6 @@ export class ChatService {
     this.configService.generalChat$
       .pipe(takeUntilDestroyed())
       .subscribe(generalChat => this.generalChat = generalChat);
-
-    this.openaiService.chatSettings$
-      .pipe(takeUntilDestroyed())
-      .subscribe(chatSettings => this.openAIChat = chatSettings);
 
     this.ollamaService.chatSettings$
       .pipe(takeUntilDestroyed())
@@ -51,7 +43,7 @@ export class ChatService {
   }
 
   /**
-   * Check if user has chat settings enabled or GPT chat settings enabled.
+   * Check if user has chat settings enabled or Ollama chat settings enabled.
    * @param user The user that sent the message
    * @param source Platform that the message came from
    * @return boolean If user message was played as TTS
@@ -59,12 +51,11 @@ export class ChatService {
   async onMessage(user: ChatUserMessage, source: AudioSource) {
     const canProceed = await this.audioService.canProcessMessage(user.text, user.displayName);
 
-    if (!canProceed || !this.generalChat.enabled && !this.openAIChat.enabled && !this.ollamaChat.enabled) {
+    if (!canProceed || !this.generalChat.enabled && !this.ollamaChat.enabled) {
       return false;
     }
 
     const generalCooldownID = `${source}-general`;
-    const gptCooldownID = `${source}-gpt`;
     const ollamaCooldownID = `${source}-ollama`;
     const { text } = user;
 
@@ -80,27 +71,8 @@ export class ChatService {
       this.audioService.playTts(trimmedText, user.displayName, source, this.generalChat.charLimit);
       const duration = this.generalChat.cooldown * 1000;
 
-      // Handle cooldown if there is any.
       this.cooldowns.set(generalCooldownID, true);
       setTimeout(() => this.cooldowns.set(generalCooldownID, false), duration);
-
-      return true;
-    }
-
-    /**
-     * Handle GPT related chat commands and their cooldowns
-     */
-    if (this.openAIChat.enabled &&
-      text.startsWith(this.openAIChat.command) &&
-      this.hasChatCommandPermissions(user, this.openAIChat.permissions) &&
-      !this.cooldowns.get(gptCooldownID)
-    ) {
-      this.openaiService.playOpenAIResponse(user.displayName, text, true);
-      const duration = this.openAIChat.cooldown * 1000;
-
-      // Handle cooldown if there is any.
-      this.cooldowns.set(gptCooldownID, true);
-      setTimeout(() => this.cooldowns.set(gptCooldownID, false), duration);
 
       return true;
     }
@@ -116,7 +88,6 @@ export class ChatService {
       this.ollamaService.playOllamaResponse(user.displayName, text, true);
       const duration = this.ollamaChat.cooldown * 1000;
 
-      // Handle cooldown if there is any.
       this.cooldowns.set(ollamaCooldownID, true);
       setTimeout(() => this.cooldowns.set(ollamaCooldownID, false), duration);
 
@@ -126,7 +97,7 @@ export class ChatService {
     return false;
   }
 
-  randomChance(user: Pick<ChatUserMessage, 'text' | 'displayName'>, chance: number, useOpenAI: boolean, source: AudioSource) {
+  randomChance(user: Pick<ChatUserMessage, 'text' | 'displayName'>, chance: number, useOllama: boolean, source: AudioSource) {
     const diceRoll = Math.random() * 100;
 
     if (diceRoll > chance) {
@@ -143,11 +114,8 @@ export class ChatService {
       return;
     }
 
-    /**
-     * If OpenAI is enabled then get the model to generate a response.
-     */
-    if (useOpenAI) {
-      this.openaiService.playOpenAIResponse(displayName, text);
+    if (useOllama) {
+      this.ollamaService.playOllamaResponse(displayName, text);
     } else {
       this.audioService.playTts(text, displayName, source, this.generalChat.charLimit);
     }
@@ -158,10 +126,6 @@ export class ChatService {
   }
 
   handleWatchStreak(user: WatchStreakUser) {
-    /**
-     * Handle modifiers here potentially?
-     */
-
     this.store.dispatch(WatchStreakActions.updateUsersWatchDate({
       user: {
         userName: user.displayName,
